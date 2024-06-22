@@ -1,7 +1,8 @@
+// Put your code below this line.
+
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import "@aws-amplify/ui-react/styles.css";
-import { API } from "aws-amplify";
 import {
   Button,
   Flex,
@@ -11,90 +12,93 @@ import {
   View,
   withAuthenticator,
 } from "@aws-amplify/ui-react";
-import { listNotes } from "./graphql/queries";
+import { listTodos } from "./graphql/queries";
 import {
-  createNote as createNoteMutation,
-  deleteNote as deleteNoteMutation,
+  createTodo as createTodoMutation,
+  deleteTodo as deleteTodoMutation,
 } from "./graphql/mutations";
+import { generateClient } from 'aws-amplify/api';
+
+const client = generateClient();
 
 const App = ({ signOut }) => {
-  const [notes, setNotes] = useState([]);
+  const [Todo, setTodo] = useState([]);
 
   useEffect(() => {
-    fetchNotes();
+    fetchTodo();
   }, []);
 
-  async function fetchNotes() {
-    const apiData = await API.graphql({ query: listNotes });
-    const notesFromAPI = apiData.data.listNotes.items;
-    setNotes(notesFromAPI);
+  async function fetchTodo() {
+    const apiData = await client.graphql({ query: listTodos });
+    const TodoFromAPI = apiData.data.listTodos.items;
+    setTodo(TodoFromAPI);
   }
 
-  async function createNote(event) {
+  async function createTodo(event) {
     event.preventDefault();
     const form = new FormData(event.target);
     const data = {
       name: form.get("name"),
       description: form.get("description"),
     };
-    await API.graphql({
-      query: createNoteMutation,
+    await client.graphql({
+      query: createTodoMutation,
       variables: { input: data },
     });
-    fetchNotes();
+    fetchTodo();
     event.target.reset();
   }
 
-  async function deleteNote({ id }) {
-    const newNotes = notes.filter((note) => note.id !== id);
-    setNotes(newNotes);
-    await API.graphql({
-      query: deleteNoteMutation,
+  async function deleteTodo({ id }) {
+    const newTodo = Todo.filter((todo) => todo.id !== id);
+    setTodo(newTodo);
+    await client.graphql({
+      query: deleteTodoMutation,
       variables: { input: { id } },
     });
   }
 
   return (
     <View className="App">
-      <Heading level={1}>My Notes App</Heading>
-      <View as="form" margin="3rem 0" onSubmit={createNote}>
+      <Heading level={1}>My Todo App</Heading>
+      <View as="form" margin="3rem 0" onSubmit={createTodo}>
         <Flex direction="row" justifyContent="center">
           <TextField
             name="name"
-            placeholder="Note Name"
-            label="Note Name"
+            placeholder="To Do Name"
+            label="To Do Name"
             labelHidden
             variation="quiet"
             required
           />
           <TextField
             name="description"
-            placeholder="Note Description"
-            label="Note Description"
+            placeholder= "To Do Description"
+            label="To Do Description"
             labelHidden
             variation="quiet"
             required
           />
           <Button type="submit" variation="primary">
-            Create Note
+            Create To Do
           </Button>
         </Flex>
       </View>
-      <Heading level={2}>Current Notes</Heading>
+      <Heading level={2}>Current Todo</Heading>
       <View margin="3rem 0">
-        {notes.map((note) => (
+        {Todo.map((todo) => (
           <Flex
-            key={note.id || note.name}
+            key={todo.id || todo.name}
             direction="row"
             justifyContent="center"
             alignItems="center"
           >
             <Text as="strong" fontWeight={700}>
-              {note.name}
+              {todo.name}
             </Text>
-            <Text as="span">{note.description}</Text>
-            <Button variation="link" onClick={() => deleteNote(note)}>
-              Delete note
+            <Text as="span">{todo.description}</Text>
+            <Button variation="link" onClick={() => deleteTodo(todo)}>
+              Delete To Do
             </Button>
           </Flex>
         ))}
